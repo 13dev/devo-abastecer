@@ -1,0 +1,52 @@
+name: ⛽️ Update Gas Prices from DRETT
+on:
+  schedule:
+    - cron: "0 */6 * * 6,0"
+    - cron: "*/30 * * * 4,5"
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions: write-all
+
+jobs:
+  update-gas-prices:
+    runs-on: ubuntu-latest
+    name: ⛽️ Update Gas Prices from DRETT
+
+    steps:
+      - name: 📀 Checks Repository
+        uses: actions/checkout@v6
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 🐍 Setup Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+          cache: "pip"
+          cache-dependency-path: requirements.txt
+
+      - name: 📦 Install Python Requirements
+        shell: bash
+        run: pip install -r requirements.txt
+
+      - name: 🛢️ Export data to file, add history and publish on Twitter
+        env:
+          CONSUMER_KEY: ${{ secrets.CONSUMER_KEY }}
+          CONSUMER_SECRET: ${{ secrets.CONSUMER_SECRET }}
+          ACCESS_TOKEN: ${{ secrets.ACCESS_TOKEN }}
+          ACCESS_TOKEN_SECRET: ${{ secrets.ACCESS_TOKEN_SECRET }}
+          BLUESKY_HANDLE: ${{ secrets.BLUESKY_HANDLE }}
+          BLUESKY_APP_PASSWORD: ${{ secrets.BLUESKY_APP_PASSWORD }}
+          FACEBOOK_PAGE_ID: ${{ secrets.FACEBOOK_PAGE_ID }}
+          FACEBOOK_ACCESS_TOKEN: ${{ secrets.FACEBOOK_ACCESS_TOKEN }}
+        shell: bash
+        run: python update_gas_prices.py
+
+      - name: 📎 Commit Gas Info with History
+        uses: actions-js/push@master
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          branch: main
